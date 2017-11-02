@@ -11,24 +11,19 @@
 |
 */
 
-Route::get('/', function () {
-    return view('blog.index');
-})->name('blog.index');
+// In this Route we delete the closure that was previously in place and instead hook up the controller
+// One way is to pass a string as the second argument which describes the controller/action we want to use
+// format : nameOfController@nameOfAction
+// Another way is to pass an array of key/value pairs a la 'uses' => nameOfController@nameOfAction
+// The advantage of this is that you can configure more of the array's properties, such as using
+// 'as' => 'blog.index' as the name and then removing the ->name('blog.index') from the end
+// The route is a little more structured and easier to read this way
+Route::get('/', 'PostController@getIndex')->name('blog.index');
 
-Route::get('post/{id}', function ($id) {
-    if ($id == 1) {
-      $post = [
-        'title' => 'Learning Laravel',
-        'content' => 'This blog post will get you on the right track with Laravel!'
-      ];
-    } else {
-      $post = [
-        'title' => 'Something else',
-        'content' => 'Some other content'
-      ];
-    };
-    return view('blog.post', ['post' => $post]);
-})->name('blog.post');
+Route::get('post/{id}', [
+    'uses' => 'PostController@getPost',
+    'as' => 'blog.post'
+]);
 
 Route::get('about', function () {
   return view('other.about');
@@ -37,56 +32,28 @@ Route::get('about', function () {
 // Route::group allows you to pass associative array as the first argument which configures how the routes should be grouped
 
 Route::group(['prefix' => 'admin'], function () {
-  Route::get('', function () {
-    return view('admin.index');
-  })->name('admin.index');
+  Route::get('', [
+      'uses' => 'PostController@getAdminIndex',
+      'as' => 'admin.index'
+  ]);
 
-  Route::get('create', function () {
-    return view('admin.create');
-  })->name('admin.create');
+  Route::get('create', [
+      'uses' => 'PostController@getAdminCreate',
+      'as' => 'admin.create'
+  ]);
 
-  Route::post('create', function (\Illuminate\Http\Request $request, \Illuminate\Validation\Factory $validator) {
-    // save validator factory in a variable so you can deal with it if it fails
-    $validation = $validator->make($request->all(), [
-      // the names of the fields we are validating (e.g. 'title') are those we are using in our forms
-      'title' => 'required|min:5',
-      'content' => 'required|min:10'
-    ]);
-    if ($validation->fails()) {
-      return redirect()->back()->withErrors($validation);
-    };
-    return redirect()
-    ->route('admin.index')
-    ->with('info', 'Post created, new Title: '. $request->input('title'));
-  })->name('admin.create');
+  Route::post('create', [
+      'uses' => 'PostController@postAdminCreate',
+      'as' => 'admin.create'
+  ]);
 
-  Route::get('edit/{id}', function ($id) {
-    if ($id == 1) {
-      $post = [
-        'title' => 'Learning Laravel',
-        'content' => 'This blog post will get you on the right track with Laravel!'
-      ];
-    } else {
-      $post = [
-        'title' => 'Something else',
-        'content' => 'Some other content'
-      ];
-    };
-    return view('admin.edit', ['post' => $post]);
-  })->name('admin.edit');
+  Route::get('edit/{id}', [
+      'uses' => 'PostController@getAdminEdit',
+      'as' => 'admin.edit'
+  ]);
 
-  Route::post('edit', function (\Illuminate\Http\Request $request, \Illuminate\Validation\Factory $validator) {
-    // save validator factory in a variable so you can deal with it if it fails
-    $validation = $validator->make($request->all(), [
-      // the names of the fields we are validating (e.g. 'title') are those we are using in our forms
-      'title' => 'required|min:5',
-      'content' => 'required|min:10'
-    ]);
-    if ($validation->fails()) {
-      return redirect()->back()->withErrors($validation);
-    };
-    return redirect()
-    ->route('admin.index')
-    ->with('info', 'Post edited, new Title: '. $request->input('title'));
-  })->name('admin.update');
-});
+  Route::post('edit', [
+      'uses' => 'PostController@postAdminUpdate',
+      'as' => 'admin.update'
+  ]);
+ });
